@@ -1,8 +1,10 @@
 import { useRef, useEffect } from "react";
+import Modal from "./Modal";
 import MobileHamburger from "./MobileHamburger";
 
 const Navbar = () => {
   const menuRef = useRef<HTMLUListElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const currentPath =
     typeof window !== "undefined" ? window.location.pathname : "/";
 
@@ -19,6 +21,19 @@ const Navbar = () => {
     };
   }, [menuRef]);
 
+  useEffect(() => {
+    const currentModal = modalRef.current;
+    if (currentModal) {
+      currentModal.addEventListener("keydown", handleFocusLock);
+    }
+
+    return () => {
+      if (currentModal) {
+        currentModal.removeEventListener("keydown", handleFocusLock);
+      }
+    };
+  }, [modalRef]);
+
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "ArrowUp" || event.key === "ArrowDown") {
       event.preventDefault();
@@ -27,7 +42,7 @@ const Navbar = () => {
       if (!menuItems) return;
 
       const currentIndex = Array.from(menuItems).findIndex(
-        (menuItem) => menuItem === document.activeElement
+(menuItem) => menuItem === document.activeElement
       );
       let nextIndex: number;
       if (event.key === "ArrowUp") {
@@ -41,8 +56,33 @@ const Navbar = () => {
     }
   };
 
+  const handleFocusLock = (event: KeyboardEvent) => {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      const focusableElements = modalRef.current?.querySelectorAll(
+        "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+      );
+      if (!focusableElements) return;
+      const firstFocusableElement = focusableElements[0] as HTMLElement;
+      const lastFocusableElement =
+        focusableElements[focusableElements.length - 1] as HTMLElement;
+      if (event.shiftKey) {
+        if (document.activeElement === firstFocusableElement) {
+          lastFocusableElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastFocusableElement) {
+          firstFocusableElement.focus();
+        }
+      }
+    }
+  };
+
   return (
-    <nav aria-label="Main navigation" className="border h-20 flex items-center px-4">
+    <nav
+      aria-label="Main navigation"
+      className="flex items-center h-20 px-4 border"
+    >
       {/* Mobile menu */}
       <MobileHamburger />
       {/* Desktop links :md plus*/}
